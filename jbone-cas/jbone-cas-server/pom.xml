@@ -406,7 +406,7 @@
         </dependency>
         <dependency>
             <groupId>cn.jbone</groupId>
-            <artifactId>jbone-sys-api-feign</artifactId>
+            <artifactId>jbone-sys-api-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -428,6 +428,12 @@
         <dependency>
             <groupId>org.apereo.cas</groupId>
             <artifactId>cas-server-support-jpa-ticket-registry</artifactId>
+            <version>${cas.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apereo.cas</groupId>
+            <artifactId>cas-server-support-pac4j-webflow</artifactId>
             <version>${cas.version}</version>
         </dependency>
 

@@ -34,6 +34,8 @@ zipkin:
 server:
   port: 10003
 
+turbine.stream.port: 10004
+
 # 注册中心配置
 eureka:
   client:
@@ -43,19 +45,25 @@ eureka:
       defaultZone: http://localhost:10001/eureka
   instance:
     prefer-ip-address: true
-    instance-id: http://${spring.cloud.client.ipAddress}:${server.port}
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
 
 # 禁用管理安全策略
 management:
   security:
     enabled: false
 
+# 配置Eureka中的serviceId列表，表明监控哪些服务
+#turbine.appConfig: jbone-sys-admin,jbone-sys-server,jbone-tag-admin,jbone-cas,jbone-cas-manager,jbone-sm-monitor
+#指定聚合哪些集群，多个使用","分割，默认为default
+#turbine.aggregator.clusterConfig: default
+#clusterNameExpression指定集群名称，默认表达式appName；此时：turbine.aggregator.clusterConfig需要配置想要监控的应用名称；2. 当clusterNameExpression: default时，turbine.aggregator.clusterConfig可以不写，因为默认就是default
+#turbine.clusterNameExpression: new String("default")
 
 
 jbone:
   #CAS服务地址
   cas:
-    casServerUrl: https://jbone-cas.majunwei.com:8443/cas
+    casServerUrl: http://jbone-cas.majunwei.com:30001/cas
     #当前系统地址
     currentServerUrlPrefix: http://jbone-sm-monitor.majunwei.com:10003
     #过滤器地址,CAS认证通过后会回掉到jbone.cas.currentServerUrlPrefix/jbone.cas.casFilterUrlPattern
@@ -66,6 +74,29 @@ jbone:
     unauthorizedUrl: /403
     #权限过滤规则
     filterChainDefinition:
+      /health: anon
+      /archaius: anon
+      /refresh: anon
+      /configprops: anon
+      /env/**: anon
+      /service-registry/**: anon
+      /auditevents: anon
+      /pause: anon
+      /dump: anon
+      /loggers/**: anon
+      /resume: anon
+      /metrics/**: anon
+      /channels: anon
+      /beans: anon
+      /mappings: anon
+      /autoconfig: anon
+      /trace: anon
+      /hystrix.stream/**: anon
+      /info: anon
+      /restart: anon
+      /heapdump: anon
+      /features: anon
+      /turbine.stream: anon
       /zipkin/**: authc,roles[serverAdministrator]
       /**: anon
       /login: anon
@@ -82,14 +113,13 @@ jbone:
 # info接口返回值
 info:
   app:
-    java:
-      source: ${java.version}
-      target: ${java.version}
     name: ${spring.application.name}
-  git:
-    url: https://github.com/417511458/jbone
-  gitee:
-    url: https://gitee.com/majunwei2017/jbone
+    version: 1.0.0
+  java:
+    version: ${java.version}
+  code:
+    git: https://github.com/417511458/jbone
+    gitee: https://gitee.com/majunwei2017/jbone
   domain: http://www.majunwei.com
 
 # 启用超时设置

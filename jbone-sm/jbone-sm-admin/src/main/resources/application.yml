@@ -5,8 +5,24 @@ spring:
     host: 127.0.0.1
     port: 6379
     password: jbone
-server:
-  port: 10002
+  cloud:
+    config:
+    enabled: false
+  boot:
+    admin:
+      monitor:
+        #监控超时时间
+        connect-timeout: 30000
+      routes:
+        endpoints: env,metrics,dump,jolokia,info,configprops,trace,logfile,refresh,flyway,liquibase,heapdump,loggers,auditevents,hystrix.stream
+      # turbine监控配置
+      # clusters是指监控的集群
+      # location是turbine服务的ID，Jbone中使用jbone-sm-monitor作为turbine监控服务
+      turbine:
+        location: http://jbone-sm-monitor.majunwei.com:10004/
+      context-path: /admin
+
+server.port: 10002
 
 #注册中心
 eureka:
@@ -15,35 +31,25 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:10001/eureka
-    metadata-map:
-      user.name: jbone
-      user.password: jbone
   instance:
     prefer-ip-address: true
-    instance-id: http://${spring.cloud.client.ipAddress}:${server.port}
-    metadata-map:
-      user.name: jbone
-      user.password: jbone
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
 
-turbine:
-  app-config: JBONE-SYS-SERVER
-  cluster-name-expression: new String('default')
-  combine-host-port: true
 
-management:
-  security:
-    enabled: false
+management.security.enabled: false
+
 
 #CAS服务地址
 jbone:
   cas:
-    casServerUrl: https://jbone-cas.majunwei.com:8443/cas
+    casServerUrl: http://jbone-cas.majunwei.com:30001/cas
     #当前系统地址
     currentServerUrlPrefix: http://jbone-sm-admin.majunwei.com:10002
     #过滤器地址,CAS认证通过后会回掉到jbone.cas.currentServerUrlPrefix/jbone.cas.casFilterUrlPattern
     casFilterUrlPattern: /cas
     #登录成功后的跳转路径，默认"/"
-    successUrl: /
+    successUrl: /admin/
+    logoutUrl: /admin/logout
     #未授权的跳转路径，默认"/403"
     unauthorizedUrl: /403
     clientSessionTimeout: 180000
@@ -71,7 +77,10 @@ jbone:
       /restart: anon
       /heapdump: anon
       /features: anon
-      /**: authc,roles[serverAdministrator]
+      /turbine.stream: anon
+      /admin/**: authc,roles[serverAdministrator]
+#      /**: anon
+#      /login: anon
 
   #系统服务名称
   sys:
@@ -86,14 +95,13 @@ jbone:
 # info接口返回值
 info:
   app:
-    java:
-      source: ${java.version}
-      target: ${java.version}
     name: ${spring.application.name}
-  git:
-    url: https://github.com/417511458/jbone
-  gitee:
-    url: https://gitee.com/majunwei2017/jbone
+    version: 1.0.0
+  java:
+    version: ${java.version}
+  code:
+    git: https://github.com/417511458/jbone
+    gitee: https://gitee.com/majunwei2017/jbone
   domain: http://www.majunwei.com
 
 # 启用超时设置

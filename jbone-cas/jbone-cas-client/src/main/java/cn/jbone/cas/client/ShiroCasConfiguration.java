@@ -23,6 +23,7 @@ import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.SimpleCookie;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.pac4j.cas.client.CasClient;
 import org.pac4j.cas.config.CasConfiguration;
@@ -37,11 +38,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
+import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Shiro集成Cas配置
@@ -114,6 +113,8 @@ public class ShiroCasConfiguration {
         filterRegistration.addInitParameter("targetFilterLifecycle", "true");
         filterRegistration.setEnabled(true);
         filterRegistration.addUrlPatterns("/*");
+        filterRegistration.setDispatcherTypes(EnumSet.allOf(DispatcherType.class));
+
         return filterRegistration;
     }
 
@@ -142,13 +143,14 @@ public class ShiroCasConfiguration {
     }
 
     @Bean(name = "sessionManager")
-    public DefaultWebSessionManager getDefaultWebSessionManager(SessionListener sessionListener, SessionDAO sessionDao, SessionFactory sessionFactory,JboneConfiguration jboneConfiguration){
+    public DefaultWebSessionManager getDefaultWebSessionManager(SessionListener sessionListener, SessionDAO sessionDao, SessionFactory sessionFactory,JboneConfiguration jboneConfiguration,SimpleCookie cookie){
         DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
         sessionManager.setGlobalSessionTimeout(jboneConfiguration.getCas().getClientSessionTimeout());
         sessionManager.setSessionValidationSchedulerEnabled(false);
         sessionManager.setSessionListeners(Arrays.asList(sessionListener));
         sessionManager.setSessionDAO(sessionDao);
         sessionManager.setSessionFactory(sessionFactory);
+        sessionManager.setSessionIdCookie(cookie);
         return sessionManager;
     }
 
@@ -157,6 +159,13 @@ public class ShiroCasConfiguration {
         JboneCasSessionDao sessionDao = new JboneCasSessionDao(redisTemplate);
         sessionDao.setSessionTicketStore(sessionTicketStore);
         return sessionDao;
+    }
+
+    @Bean
+    public SimpleCookie getCookie(){
+        SimpleCookie cookie = new SimpleCookie();
+        cookie.setName("jbone.session.id");
+        return cookie;
     }
 
 
@@ -184,7 +193,7 @@ public class ShiroCasConfiguration {
         Map<String, String> filterChainDefinitionMap = new LinkedHashMap<String,String>();
 
         filterChainDefinitionMap.put(jboneConfiguration.getCas().getCasFilterUrlPattern(), "callback");// shiro集成cas后，首先添加该规则
-        filterChainDefinitionMap.put("/logout","logout");
+        filterChainDefinitionMap.put(jboneConfiguration.getCas().getLogoutUrl(),"logout");
 
         //添加jbone.cas的配置规则
         if(jboneConfiguration.getCas().getFilterChainDefinition() != null){
